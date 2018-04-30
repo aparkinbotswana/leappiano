@@ -2,35 +2,35 @@ let midi = {};
 let MIDI_OUTPUT = 'LinuxSampler_in_0';
 
 // see also https://github.com/cotejp/webmidi  good lib
- if (navigator.requestMIDIAccess) {
-   navigator.requestMIDIAccess()
-   .then(midiAccess => {
-     midi.inputs = midiAccess.inputs;
-     midi.outputs = midiAccess.outputs;
+if (navigator.requestMIDIAccess) {
+  navigator.requestMIDIAccess()
+  .then(midiAccess => {
+    midi.inputs = midiAccess.inputs;
+    midi.outputs = midiAccess.outputs;
 
-     console.log('midi', midi);
+    // console.log('midi', midi);
 
-     for (let output of midiAccess.outputs.values()){
-       // console.log('output:', output);
-       if( output.name === MIDI_OUTPUT ){
-         midi.out = output;
-         console.log('output', output);
-       }
-     }
-   },
-   fail => console.log('midi connection failure', fail)
-   );
- } else {
-   console.log('WebMIDI is not supported in this browser.');
- }
-
+    for (let output of midiAccess.outputs.values()){
+      // console.log('output:', output);
+      if( output.name === MIDI_OUTPUT ){
+        midi.out = output;
+        // console.log('output', output);
+      }
+    }
+  },
+  fail => console.log('midi connection failure', fail)
+  );
+} else {
+  console.log('WebMIDI is not supported in this browser.');
+}
 
 document.addEventListener('DOMContentLoaded', function(){
 
   let canvasElement = document.getElementById("displayArea");
   let displayArea = canvasElement.getContext("2d");
+  var count = 1
 
-
+// setTimeout(function(){ alert("Hello"); }, 3000);
   Leap.loop( function(frame){
 
     if(frame.pointables.length > 0)
@@ -39,6 +39,8 @@ document.addEventListener('DOMContentLoaded', function(){
       
       //Get a pointable and normalize the tip position
       let pointable = frame.pointables[0];
+      let speed = pointable.tipVelocity;
+      // console.log(speed);
       let interactionBox = frame.interactionBox;
       let normalizedPosition = interactionBox.normalizePoint(pointable.tipPosition, true);
       
@@ -46,10 +48,12 @@ document.addEventListener('DOMContentLoaded', function(){
       let canvasX = canvasElement.width * normalizedPosition[0];
       let canvasY = canvasElement.height * (1 - normalizedPosition[1]);
       //we can ignore z for a 2D context
-      
       displayArea.strokeText("(" + canvasX.toFixed(1) + ", " + canvasY.toFixed(1) + ")", canvasX, canvasY);
 
-      // midi.out.send([ eventType (144 == noteOn), noteNumber, velocity ])
+      count += 1
+
+      console.log('playing ' + count);
+      // [ eventType (144 == noteOn), noteNumber, velocity ]
       if (canvasX > 0 && canvasX < 5){
         midi.out.send([144, 61, 80]);
       } else if (canvasX > 5 && canvasX < 10){
