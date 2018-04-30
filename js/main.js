@@ -10,7 +10,7 @@ let MIDI_OUTPUT = 'LinuxSampler_in_0';
 
      console.log('midi', midi);
 
-     for (var output of midiAccess.outputs.values()){
+     for (let output of midiAccess.outputs.values()){
        // console.log('output:', output);
        if( output.name === MIDI_OUTPUT ){
          midi.out = output;
@@ -27,117 +27,70 @@ let MIDI_OUTPUT = 'LinuxSampler_in_0';
 
 document.addEventListener('DOMContentLoaded', function(){
 
-  document.addEventListener('keydown', function(){
-    console.log('playing!');
-    midi.out.send([144, 60, 80]);  // [ eventType (144 == noteOn), noteNumber, velocity ]
-  });
-
-  // var text = "I am a dirty little robot"
-  function voicePlay(text){
-    if(responsiveVoice.voiceSupport()) {
-
-    responsiveVoice.speak(text);
-  }}
-
-  const concatData = function(id, data) {
-    return id + ": " + data + "<br>"
-  }
-
-
-  let output = document.getElementById('output');
-  let frameString = "", handString = "", fingerString = "";
-  let hand, finger;
-
-  let l = null;
-  let r = null;
+  let canvasElement = document.getElementById("displayArea");
+  let displayArea = canvasElement.getContext("2d");
 
 
   Leap.loop( function(frame){
 
-    frameString = concatData("frame_id", frame.id);
-    frameString += concatData("num_hands", frame.hands.length);
+    if(frame.pointables.length > 0)
+    {
+      canvasElement.width = canvasElement.width; //clear
+      
+      //Get a pointable and normalize the tip position
+      let pointable = frame.pointables[0];
+      let interactionBox = frame.interactionBox;
+      let normalizedPosition = interactionBox.normalizePoint(pointable.tipPosition, true);
+      
+      // Convert the normalized coordinates to span the canvas
+      let canvasX = canvasElement.width * normalizedPosition[0];
+      let canvasY = canvasElement.height * (1 - normalizedPosition[1]);
+      //we can ignore z for a 2D context
+      
+      displayArea.strokeText("(" + canvasX.toFixed(1) + ", " + canvasY.toFixed(1) + ")", canvasX, canvasY);
 
-    if( frame.hands.length > 1 ){
-      frameString += concatData("hands[0].type", frame.hands[0].type);
-      frameString += concatData("hands[1].type", frame.hands[1].type);
-
-      if( frame.hands[0].type === "left") {
-        l = frame.hands[0];
-        r = frame.hands[1];
-      } else {
-        l = frame.hands[1];
-        r = frame.hands[0];
+      // midi.out.send([ eventType (144 == noteOn), noteNumber, velocity ])
+      if (canvasX > 0 && canvasX < 5){
+        midi.out.send([144, 61, 80]);
+      } else if (canvasX > 5 && canvasX < 10){
+        midi.out.send([144, 62, 80]);
+      } else if (canvasX > 10 && canvasX < 15){
+        midi.out.send([144, 63, 80]);
+      } else if (canvasX > 15 && canvasX < 20){
+        midi.out.send([144, 64, 80]);
+      } else if (canvasX > 20 && canvasX < 25){
+        midi.out.send([144, 65, 80]);
+      } else if (canvasX > 25 && canvasX < 30){
+        midi.out.send([144, 66, 80]);
+      } else if (canvasX > 30 && canvasX < 35){
+        midi.out.send([144, 67, 80]);
+      } else if (canvasX > 35 && canvasX < 40){
+        midi.out.send([144, 68, 80]);
+      } else if (canvasX > 40 && canvasX < 45){
+        midi.out.send([144, 69, 80]);
+      } else if (canvasX > 45 && canvasX < 50){
+        midi.out.send([144, 70, 80]);
+      } else if (canvasX > 50 && canvasX < 55){
+        midi.out.send([144, 71, 80]);
+      } else if (canvasX > 55 && canvasX < 60){
+        midi.out.send([144, 72, 80]);
+      } else if (canvasX > 60 && canvasX < 65){
+        midi.out.send([144, 73, 80]);
+      } else if (canvasX > 65 && canvasX < 70){
+        midi.out.send([144, 74, 80]);
+      } else if (canvasX > 70 && canvasX < 75){
+        midi.out.send([144, 75, 80]);
+      } else if (canvasX > 75 && canvasX < 80){
+        midi.out.send([144, 76, 80]);
+      } else if (canvasX > 80 && canvasX < 85){
+        midi.out.send([144, 77, 80]);
+      } else if (canvasX > 85 && canvasX < 90){
+        midi.out.send([144, 78, 80]);
+      } else if (canvasX > 90 && canvasX < 95){
+        midi.out.send([144, 79, 80]);
+      } else if (canvasX > 95 && canvasX < 100){
+        midi.out.send([144, 80, 80]);
       }
-
-    } else if( frame.hands.length > 0 ){
-      frameString += concatData("hands[0].type", frame.hands[0].type);
-
-      if( frame.hands[0].type === "left") {
-        l = frame.hands[0];
-        r = null;
-      } else {
-        r = frame.hands[0];
-        l = null;
-      }
-
-    } else if( frame.hands.length === 0 ){
-      l = null;
-      r = null;
     }
-
-    // frameString += concatData("num_fingers", frame.fingers.length);
-    frameString += "<br>";
-
-    if (l) {
-      let lf = l.fingers;
-      let lfIndexTipY = lf[1].tipPosition[1]
-      let lfIndexTipX = lf[1].tipPosition[0]
-
-      // if (
-      //   // both index fingers extended
-      //   (lf[2].extended)
-      //   // no other fingers on L extended
-      //   && (!lf[0].extended && !lf[1].extended && !lf[3].extended && !lf[4].extended)) {
-      //   let text = 'Someone is being naughty'
-      //   voicePlay(text)
-      // }
-
-      if (lfIndexTipY > 250 && lfIndexTipY < 350 && lfIndexTipX > 0 && lfIndexTipX < 100) {
-        console.log('if < 100');
-      } else if (lfIndexTipY > 250 && lfIndexTipY < 350 && lfIndexTipX > 100 && lfIndexTipX < 200) {
-        console.log('elseif > 100');
-      }
-    }
-
-
-    for (var i = 0; i < frame.hands.length; i++) {
-      hand = frame.hands[i];
-      handString = concatData("hand_type", hand.type);
-      handString += concatData("pinch_strength", hand.pinchStrength);
-      handString += concatData("grab_strength", hand.grabStrength);
-      handString += concatData("confidence", hand.confidence);
-
-
-      // var xdist = hand.fingers[1].tipPosition[0]
-      // var ydist = hand.fingers[1].tipPosition[1]
-      // var zdist = hand.fingers[1].tipPosition[2]
-
-
-      handString += '<br>'
-
-
-      // finger = hand.fingers[1];
-      // fingerString += concatData("finger_type", finger.type) + " (" + getFingerName(finger.type) + ") <br>"
-      // fingerString += concatData("finger_dip", finger.dipPosition);
-      // fingerString += concatData("finger_pip", finger.pipPosition);
-      // fingerString += concatData("finger_mcp", finger.mcpPosition);
-      frameString += 'xTipDist (side to side)  ' + hand.fingers[1].tipPosition[0]
-      frameString += '<br>'
-      frameString += ' yTipDist (up and down)  ' + hand.fingers[1].tipPosition[1]
-      frameString += '<br>'
-      frameString += ' zTipDist (Back and forth)  ' + hand.fingers[1].tipPosition[2]
-    }
-
-    output.innerHTML = frameString;
   })
 }, false);
