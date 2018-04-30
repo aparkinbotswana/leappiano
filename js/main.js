@@ -1,4 +1,37 @@
+let midi = {};
+let MIDI_OUTPUT = 'LinuxSampler_in_0';
+
+// see also https://github.com/cotejp/webmidi  good lib
+ if (navigator.requestMIDIAccess) {
+   navigator.requestMIDIAccess()
+   .then(midiAccess => {
+     midi.inputs = midiAccess.inputs;
+     midi.outputs = midiAccess.outputs;
+
+     console.log('midi', midi);
+
+     for (var output of midiAccess.outputs.values()){
+       // console.log('output:', output);
+       if( output.name === MIDI_OUTPUT ){
+         midi.out = output;
+         console.log('output', output);
+       }
+     }
+   },
+   fail => console.log('midi connection failure', fail)
+   );
+ } else {
+   console.log('WebMIDI is not supported in this browser.');
+ }
+
+
 document.addEventListener('DOMContentLoaded', function(){
+
+  document.addEventListener('keydown', function(){
+    console.log('playing!');
+    midi.out.send([144, 60, 80]);  // [ eventType (144 == noteOn), noteNumber, velocity ]
+  });
+
   // var text = "I am a dirty little robot"
   function voicePlay(text){
     if(responsiveVoice.voiceSupport()) {
@@ -6,48 +39,20 @@ document.addEventListener('DOMContentLoaded', function(){
     responsiveVoice.speak(text);
   }}
 
-  var concatData = function(id, data) {
+  const concatData = function(id, data) {
     return id + ": " + data + "<br>"
   }
 
-  function getFingerName(fingerType){
-    switch (fingerType) {
-      case 0:
-        return 'Thumb';
-      break;
 
-      case 1:
-        return 'Index';
-      break;
+  let output = document.getElementById('output');
+  let frameString = "", handString = "", fingerString = "";
+  let hand, finger;
 
-      case 2:
-        return 'Middle';
-      break;
-
-      case 3:
-        return 'Ring';
-      break;
-
-      case 4:
-        return 'Pinky';
-      break;
-    }
-  }
-
-  function concatJointPosition(id, position){
-    return id + ": " + position[0] + ", " + position[1] + ", " + position[2] + "<br>"
-
-  }
-
-  var output = document.getElementById('output');
-  var frameString = "", handString = "", fingerString = "";
-  var hand, finger;
-
-  var l = null;
-  var r = null;
+  let l = null;
+  let r = null;
 
 
-  Leap.loop(/*options,*/ function(frame){
+  Leap.loop( function(frame){
 
     frameString = concatData("frame_id", frame.id);
     frameString += concatData("num_hands", frame.hands.length);
@@ -80,20 +85,27 @@ document.addEventListener('DOMContentLoaded', function(){
       r = null;
     }
 
-    frameString += concatData("num_fingers", frame.fingers.length);
+    // frameString += concatData("num_fingers", frame.fingers.length);
     frameString += "<br>";
 
     if (l) {
       let lf = l.fingers;
+      let lfIndexTipY = lf[1].tipPosition[1]
+      let lfIndexTipX = lf[1].tipPosition[0]
 
-      if (
-        // both index fingers extended
-        (lf[2].extended)
-        // no other fingers on L extended
-        && (!lf[0].extended && !lf[1].extended && !lf[3].extended && !lf[4].extended)) {
-        let text = 'I am a dirty little robot'
-        voicePlay(text)
-        console.log('You are, indeed, a dirty little robot');
+      // if (
+      //   // both index fingers extended
+      //   (lf[2].extended)
+      //   // no other fingers on L extended
+      //   && (!lf[0].extended && !lf[1].extended && !lf[3].extended && !lf[4].extended)) {
+      //   let text = 'Someone is being naughty'
+      //   voicePlay(text)
+      // }
+
+      if (lfIndexTipY > 250 && lfIndexTipY < 350 && lfIndexTipX > 0 && lfIndexTipX < 100) {
+        console.log('if < 100');
+      } else if (lfIndexTipY > 250 && lfIndexTipY < 350 && lfIndexTipX > 100 && lfIndexTipX < 200) {
+        console.log('elseif > 100');
       }
     }
 
@@ -106,19 +118,24 @@ document.addEventListener('DOMContentLoaded', function(){
       handString += concatData("confidence", hand.confidence);
 
 
+      // var xdist = hand.fingers[1].tipPosition[0]
+      // var ydist = hand.fingers[1].tipPosition[1]
+      // var zdist = hand.fingers[1].tipPosition[2]
+
+
       handString += '<br>'
 
 
-      fingerString = concatJointPosition("finger_thumb_dip", hand.thumb.dipPosition);
-
-      finger = hand.fingers[1];
-      fingerString += concatData("finger_type", finger.type) + " (" + getFingerName(finger.type) + ") <br>"
-      fingerString += concatData("finger_dip", finger.dipPosition);
-      fingerString += concatData("finger_pip", finger.pipPosition);
-      fingerString += concatData("finger_mcp", finger.mcpPosition);
-      fingerString += '<br>'
-      frameString += handString;
-      frameString += fingerString;
+      // finger = hand.fingers[1];
+      // fingerString += concatData("finger_type", finger.type) + " (" + getFingerName(finger.type) + ") <br>"
+      // fingerString += concatData("finger_dip", finger.dipPosition);
+      // fingerString += concatData("finger_pip", finger.pipPosition);
+      // fingerString += concatData("finger_mcp", finger.mcpPosition);
+      frameString += 'xTipDist (side to side)  ' + hand.fingers[1].tipPosition[0]
+      frameString += '<br>'
+      frameString += ' yTipDist (up and down)  ' + hand.fingers[1].tipPosition[1]
+      frameString += '<br>'
+      frameString += ' zTipDist (Back and forth)  ' + hand.fingers[1].tipPosition[2]
     }
 
     output.innerHTML = frameString;
